@@ -3,7 +3,7 @@ import {
   type ChatTransport,
   lastAssistantMessageIsCompleteWithApprovalResponses,
 } from "ai";
-import { getModel, providerNeedsKey, type ModelId } from "../config";
+import { providerNeedsKey, resolveModel } from "../config";
 import { usePreferencesStore } from "@/modules/settings/preferences";
 import { BUILTIN_AGENTS } from "../lib/agents";
 import { useAgentsStore } from "./agentsStore";
@@ -133,7 +133,7 @@ export async function sendMessage(text: string): Promise<boolean> {
   const sessionId = state.activeSessionId;
   if (!sessionId) return false;
   if (
-    providerNeedsKey(getModel(state.selectedModelId as ModelId).provider) &&
+    providerNeedsKey(resolveModel(state.selectedModelId).provider) &&
     !getActiveProviderKey()
   )
     return false;

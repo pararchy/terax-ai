@@ -144,6 +144,12 @@ export function endpointIdFromCompatModel(modelId: string): string {
     : "";
 }
 
+/** Stable id for the endpoint synthesized from the legacy
+ *  openaiCompatibleBaseURL/openaiCompatibleModelId prefs. A fixed id keeps the
+ *  per-endpoint keyring account (`compat-legacy-api-key`) stable across
+ *  launches — a random id would orphan the saved key on every restart. */
+export const LEGACY_COMPAT_ENDPOINT_ID = "legacy";
+
 /** One-shot migration of the legacy single OpenAI-compatible config into the
  *  named-endpoint list. Returns one endpoint when the old base URL + model id
  *  were both set, else empty. `id` is supplied by the caller to stay pure. */
@@ -155,6 +161,25 @@ export function migrateLegacyCompatEndpoint(
 ): CustomEndpoint[] {
   if (!baseURL.trim() || !modelId.trim()) return [];
   return [{ id, name: "Custom endpoint", baseURL, modelId, contextLimit }];
+}
+
+/** The custom endpoint that mirrors the legacy openai-compatible fields — the
+ *  migrated "legacy" endpoint when present, else one with the same
+ *  baseURL + modelId. Lets the legacy `openai-compatible-custom` model and
+ *  legacy autocomplete configs reuse the key saved on that endpoint. */
+export function findLegacyCompatEndpoint(
+  endpoints: readonly CustomEndpoint[],
+  baseURL: string | undefined,
+  modelId: string | undefined,
+): CustomEndpoint | undefined {
+  return (
+    endpoints.find((e) => e.id === LEGACY_COMPAT_ENDPOINT_ID) ??
+    endpoints.find(
+      (e) =>
+        e.baseURL.trim() === (baseURL ?? "").trim() &&
+        e.modelId.trim() === (modelId ?? "").trim(),
+    )
+  );
 }
 
 export function getProvider(id: ProviderId): ProviderInfo {

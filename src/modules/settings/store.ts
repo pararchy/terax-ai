@@ -5,6 +5,7 @@ import {
   DEFAULT_MODEL_ID,
   DEFAULT_STT_PROVIDER,
   isKnownModelId,
+  LEGACY_COMPAT_ENDPOINT_ID,
   LMSTUDIO_DEFAULT_BASE_URL,
   MLX_DEFAULT_BASE_URL,
   type ModelId,
@@ -461,12 +462,14 @@ export async function loadPreferences(): Promise<Preferences> {
       DEFAULT_PREFERENCES.openaiCompatibleContextLimit,
     customEndpoints: (() => {
       const stored = get<CustomEndpoint[]>(KEY_CUSTOM_ENDPOINTS);
-      if (stored && stored.length > 0) return stored;
+      // Honor an explicit stored list — including empty, so removing the last
+      // endpoint sticks instead of re-migrating from the legacy fields.
+      if (Array.isArray(stored)) return stored;
       return migrateLegacyCompatEndpoint(
         get<string>(KEY_OPENAI_COMPAT_BASE_URL) ?? "",
         get<string>(KEY_OPENAI_COMPAT_MODEL_ID) ?? "",
         get<number>(KEY_OPENAI_COMPAT_CONTEXT_LIMIT) ?? 128_000,
-        crypto.randomUUID().slice(0, 8),
+        LEGACY_COMPAT_ENDPOINT_ID,
       );
     })(),
     openrouterModelId:

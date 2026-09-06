@@ -9,6 +9,7 @@ import {
 import {
   DEFAULT_MODEL_ID,
   endpointIdFromCompatModel,
+  findLegacyCompatEndpoint,
   getModelContextLimit,
   isCompatModelId,
   LMSTUDIO_DEFAULT_BASE_URL,
@@ -290,12 +291,29 @@ export function buildConfiguredLanguageModel(
     }
     resolvedId = local.openrouterModelId.trim();
   }
-  return buildLanguageModel(m.provider, keys, resolvedId, {
-    lmstudioBaseURL: local.lmstudioBaseURL,
-    mlxBaseURL: local.mlxBaseURL,
-    ollamaBaseURL: local.ollamaBaseURL,
-    openaiCompatibleBaseURL: local.openaiCompatibleBaseURL,
-  });
+  // The legacy `openai-compatible-custom` model shares its connection with the
+  // custom endpoint migrated from the same prefs — reuse that endpoint's key
+  // so a key saved on the endpoint card also authenticates the legacy model.
+  const legacyEp =
+    m.id === "openai-compatible-custom"
+      ? findLegacyCompatEndpoint(
+          local.customEndpoints ?? [],
+          local.openaiCompatibleBaseURL,
+          resolvedId,
+        )
+      : undefined;
+  return buildLanguageModel(
+    m.provider,
+    keys,
+    resolvedId,
+    {
+      lmstudioBaseURL: local.lmstudioBaseURL,
+      mlxBaseURL: local.mlxBaseURL,
+      ollamaBaseURL: local.ollamaBaseURL,
+      openaiCompatibleBaseURL: local.openaiCompatibleBaseURL,
+    },
+    legacyEp ? local.customEndpointKeys?.[legacyEp.id] : undefined,
+  );
 }
 
 const PLAN_MODE_PROMPT = `## PLAN MODE — ACTIVE

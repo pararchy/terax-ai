@@ -1,4 +1,7 @@
-import { endpointIdFromCompatModel } from "@/modules/ai/config";
+import {
+  endpointIdFromCompatModel,
+  findLegacyCompatEndpoint,
+} from "@/modules/ai/config";
 import { getCustomEndpointKey, getKey } from "@/modules/ai/lib/keyring";
 import { lspFormatDocument, useLspExtension } from "@/modules/lsp";
 import { usePreferencesStore } from "@/modules/settings/preferences";
@@ -143,7 +146,19 @@ export const EditorPane = memo(
         // OpenAI-compatible keys live in a per-endpoint keyring slot.
         if (provider === "openai-compatible") {
           const eid = endpointIdFromCompatModel(s.autocompleteModelId);
-          const k = eid ? await getCustomEndpointKey(eid) : null;
+          let k = eid ? await getCustomEndpointKey(eid) : null;
+          // Legacy autocomplete config (e.g. model id "auto") has no endpoint
+          // id — fall back to the endpoint that mirrors the legacy fields,
+          // then to the provider-level key.
+          if (!k) {
+            const ep = findLegacyCompatEndpoint(
+              s.customEndpoints,
+              s.openaiCompatibleBaseURL,
+              s.autocompleteModelId,
+            );
+            if (ep) k = await getCustomEndpointKey(ep.id);
+          }
+          if (!k) k = await getKey("openai-compatible");
           if (!cancelled) apiKeyRef.current = k;
           return;
         }

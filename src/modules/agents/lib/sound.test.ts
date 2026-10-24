@@ -41,10 +41,12 @@ function installAudioMocks(initialState: AudioContextState = "running") {
     }
   }
 
-  const fetchMock = vi.fn(async () => ({
+  const fetchMock = vi.fn(async (url: string) => ({
     ok: true,
     status: 200,
+    json: async () => ({ sounds: ["sounds/test.mp3"] }),
     arrayBuffer: async () => new ArrayBuffer(4),
+    url,
   }));
   vi.stubGlobal("AudioContext", AudioContextMock);
   vi.stubGlobal("fetch", fetchMock);
@@ -75,8 +77,9 @@ describe("playAgentNotificationSound", () => {
     await vi.waitFor(() => expect(mocks.sources[1]?.start).toHaveBeenCalledOnce());
 
     expect(mocks.contexts).toHaveLength(1);
-    expect(mocks.fetchMock).toHaveBeenCalledOnce();
-    expect(mocks.fetchMock).toHaveBeenCalledWith("/notification.mp3");
+    expect(mocks.fetchMock).toHaveBeenCalledTimes(2);
+    expect(mocks.fetchMock).toHaveBeenNthCalledWith(1, "/sounds/manifest.json");
+    expect(mocks.fetchMock).toHaveBeenNthCalledWith(2, "/sounds/test.mp3");
     expect(mocks.decodeAudioData).toHaveBeenCalledOnce();
     expect(mocks.sources[0]?.stop).toHaveBeenCalledOnce();
     expect(mocks.sources[1]?.buffer).toBe(mocks.decoded);
@@ -94,7 +97,7 @@ describe("playAgentNotificationSound", () => {
     await vi.waitFor(() => expect(mocks.sources[0]?.start).toHaveBeenCalledOnce());
 
     expect(mocks.sources).toHaveLength(1);
-    expect(mocks.fetchMock).toHaveBeenCalledOnce();
+    expect(mocks.fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("resumes a suspended context before playback", async () => {

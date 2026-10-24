@@ -1,0 +1,31 @@
+{
+  "sounds": [
+    "sounds/american-robin.mp3",
+    "sounds/australian-magpie.mp3",
+    "sounds/belted-kingfisher.mp3",
+    "sounds/blackbird.mp3",
+    "sounds/blackburnian-warbler.mp3",
+    "sounds/brown-hawk-owl.mp3",
+    "sounds/downy-woodpecker.mp3",
+    "sounds/dusky-warbler.mp3",
+    "sounds/eagle-owl.mp3",
+    "sounds/eurasian-wren.mp3",
+    "sounds/european-robin.mp3",
+    "sounds/fulvous-woodpecker.mp3",
+    "sounds/herring-gull.mp3",
+    "sounds/house-finch.mp3",
+    "sounds/house-wren.mp3",
+    "sounds/jungle-nightjar.mp3",
+    "sounds/marsh-wren.mp3",
+    "sounds/mourning-dove.mp3",
+    "sounds/mourning-warbler.mp3",
+    "sounds/nightingale.mp3",
+    "sounds/redbellied-woodpecker.mp3",
+    "sounds/redwing-blackbird.mp3",
+    "sounds/screech-owl.mp3",
+    "sounds/sedge-wren.mp3",
+    "sounds/turtle-dove.mp3",
+    "sounds/winter-wren.mp3",
+    "sounds/yellow-billed-cuckoo.mp3"
+  ]
+}

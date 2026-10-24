@@ -30,6 +30,48 @@ fn get_launch_files(state: State<'_, LaunchFiles>) -> Vec<String> {
     std::mem::take(&mut *state.0.lock().expect("LaunchFiles mutex poisoned"))
 }
 
+/// Reads a user-provided notification sound override from
+/// `$XDG_CONFIG_HOME/terax/notification.mp3` (usually ~/.config/terax/).
+/// Errors when the file is absent so the frontend falls back to the bundled sound.
+#[tauri::command]
+async fn read_notification_sound() -> Result<Vec<u8>, String> {
+    let path = dirs::config_dir()
+        .ok_or_else(|| "no config dir".to_string())?
+        .join("terax")
+        .join("notification.mp3");
+    std::fs::read(&path).map_err(|e| format!("{}: {e}", path.display()))
+}
+
+/// Reads every audio file in `$XDG_CONFIG_HOME/terax/sounds/` as a user-provided
+/// notification sound library; the frontend picks one at random per alert.
+/// Errors when the dir is absent/empty so the frontend falls back to the
+/// single-file override, then the bundled `public/sounds/` library.
+#[tauri::command]
+async fn read_notification_sounds() -> Result<Vec<Vec<u8>>, String> {
+    let dir = dirs::config_dir()
+        .ok_or_else(|| "no config dir".to_string())?
+        .join("terax")
+        .join("sounds");
+    let mut files: Vec<_> = std::fs::read_dir(&dir)
+        .map_err(|e| format!("{}: {e}", dir.display()))?
+        .filter_map(|e| e.ok().map(|e| e.path()))
+        .filter(|p| {
+            p.extension()
+                .and_then(|e| e.to_str())
+                .is_some_and(|e| matches!(e.to_ascii_lowercase().as_str(), "mp3" | "ogg" | "oga" | "wav" | "m4a" | "flac"))
+        })
+        .collect();
+    files.sort();
+    let sounds: Vec<Vec<u8>> = files
+        .iter()
+        .filter_map(|p| std::fs::read(p).ok())
+        .collect();
+    if sounds.is_empty() {
+        return Err(format!("{}: no audio files", dir.display()));
+    }
+    Ok(sounds)
+}
+
 enum LaunchEntry {
     Dir(PathBuf),
     File(PathBuf),
@@ -320,6 +362,8 @@ pub fn run() {
             control::control_respond,
             get_launch_dir,
             get_launch_files,
+            read_notification_sound,
+            read_notification_sounds,
             open_settings_window,
             agent::agent_enable_hooks,
             agent::agent_hooks_status,
